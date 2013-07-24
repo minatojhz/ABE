@@ -1,0 +1,20 @@
+#ifndef HEAD_POLYNOMIAL
+#define HEAD_POLYNOMIAL
+#include "tate.h"
+#include "function.h"
+class Polynomial
+{
+	private:
+		vector<BIGNUM *> coefficients;
+		BIGNUM *p;
+	public:
+		Polynimail(BIGNUM *constant,BIGNUM *p,int len);
+		Polynimail();
+		void SetCoefficients(vector<BIGNUM *> coefficients);
+		void SetP(BIGNUM *p);
+		BIGNUM *GetFunctionValue(BIGNUM *x,BN_CTX *ctx);
+		BIGNUM *GetLagIntCoe(vector<int> allParties,int index,BN_CTX *ctx);
+		
+};
+
+#endif

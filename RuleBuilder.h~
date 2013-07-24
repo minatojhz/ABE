@@ -1,0 +1,26 @@
+#ifndef HEAD_RULEBUILDER
+#define HEAD_RULEBUILDER
+#include "function.h"
+class RuleBuilder
+{
+	private:
+		string ruleString;
+	public:
+		RuleBuilder(string ruleString);
+
+		vector<string> ReplaceBracket(string express);
+
+		string RecoverBracket(string express,vector<string> vec,int &count);
+
+		void ConstructOr(string express,TiXmlElement * parent,int index);
+
+		void ConstructAnd(string express,TiXmlElement *parent,int index);
+
+		TiXmlElement * RuleString2XMLElement();
+        
+                string RuleString2XMLString();
+		bool Check(string &error);
+		bool CheckRule(string rule,string &error);
+};
+
+#endif

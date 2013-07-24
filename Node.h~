@@ -1,0 +1,32 @@
+#ifndef HEAD_NODE
+#define HEAD_NODE
+#include "function.h"
+#include "tate.h"
+class Node
+{
+ 	private :
+	 	int type;
+  	 	int position;
+   	 	string value;
+	public:
+		Node(TiXmlElement *element);
+                Node();
+		Node(int type ,int position,string value);
+
+    	void SetAllValue(int type ,int position,string value);
+	    void GetAllValue(int &type,int &position,string &value);
+
+		bool IsLeaf();
+		int GetPosition();
+		string GetValue();
+
+		void SetPosition(int position);
+		void SetValue(string value);
+		void SetType(bool isLeaf);
+
+		TiXmlElement * ToTiXmlElement();
+		void Print();
+		
+};
+
+#endif

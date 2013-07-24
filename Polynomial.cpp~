@@ -1,0 +1,94 @@
+#include "Polynomial.h"
+
+Polynomial::Polynomial()
+{
+	p = BN_new();
+}
+void Polynomial::SetCoefficients(vector<BIGNUM *> coefficients)
+{
+	for(int i=0;i<coefficients.size();i++)
+	{
+		BIGNUM * bigNum = BN_new();
+		BN_copy(bigNum,coefficients[i]);		
+		this->coefficients.push_back(bigNum);
+	}
+
+}
+void Polynomial::SetP(BIGNUM *p)
+{
+	BN_copy(this->p,p);
+}
+Polynomial::Polynomial(BIGNUM *constant,BIGNUM *p,int len)
+{
+    coefficients =  vector<BIGNUM *>();
+    p = BN_new();
+    coefficients->push_back(constant);
+    for(int i = 1;i< len;i++)
+    {
+       BIGNUM * rn = BN_new();
+       BN_pseudo_rand_range(rn,p);
+       coefficients->push_back(rn);
+    }
+
+}
+BIGNUM * Polynomial::GetFunctionValue(BIGNUM *x)
+{
+    BN_CTX *ctx = BN_CTX_new();
+    vector<BIGNUM *>::iterator end,start;
+    end = coefficients.end();
+    start=coefficients.begin() ;
+
+    BIGNUM * value = BN_new() ;
+    BN_copy(value,*start); 
+    
+    BIGNUM * tmp  = BN_new();
+    BIGNUM * tmpx = BN_new();
+    BN_one(tmpx);
+    
+    for (start++; start<end; start++)
+    {
+         BN_mod_mul(tmpx,tmpx,x,p,ctx);
+         BN_mod_mul(tmp,tmpx,(*start),p,ctx);
+         BN_mod_add(value,tmp,value,p,ctx);
+    }
+    BN_free(tmp);
+    BN_free(tmpx);
+    BN_CTX_free(ctx);
+    return value;
+}  
+
+BIGNUM * Polynomial::GetLagIntCoe(vector<int> *allParties,int index)
+{
+   BN_CTX *ctx = BN_CTX_new();
+   BIGNUM *up = BN_new();
+   BN_one(up);
+
+   BIGNUM *down = BN_new();
+   BN_one(down);
+
+   for(int i = 0; i< allParties->size();i++)
+   {
+     if((*allParties)[i] == index)
+     {
+       continue;    
+     }
+     BIGNUM *j   = BN_int2bn(-(*allParties)[i]);
+     BIGNUM *i_j = BN_int2bn(index-(*allParties)[i]);
+    
+     BN_mul(up,up,j,ctx);
+     BN_mul(down,down,i_j,ctx);
+   }
+
+   BIGNUM * result = BN_new();
+   
+   BN_mod_inverse(result,down,p,ctx);
+   BN_mod_mul(result,result,up,p,ctx);
+   
+
+   BN_free(up);
+   BN_free(down);
+   BN_CTX_free(ctx);
+
+   return result;
+
+}

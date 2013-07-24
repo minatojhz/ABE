@@ -1,0 +1,86 @@
+#include "Node.h"
+Node::Node(TiXmlElement *element)
+{
+   const char * typeStr    = element->Value();
+   TiXmlAttribute *posAtr = element->FirstAttribute();
+   const char *    posAtrValue = posAtr->Value();
+   TiXmlAttribute *otherAtr = posAtr->Next();
+   const char *    otherAtrValue = otherAtr->Value();
+
+   type = strcmp(typeStr,"leaf") ? 1 : 0;
+   position  = atoi(posAtrValue);
+   value = otherAtrValue;	
+}
+
+Node::Node(int type ,int position,string value)
+{
+   SetAllValue(type ,position,value);
+}
+
+Node::Node()
+{
+
+
+}
+
+void SetPosition(int position)
+{
+	this->position = position;
+}
+void SetValue(string value)
+{
+	this->value = value;
+}
+void SetType(bool isLeaf)
+{
+	this->type = isLeaf ? 0: 1;
+}
+void Node::Print()
+{
+	TiXmlDocument *doc = new TiXmlDocument();
+	doc->LinkEndChild(ToTiXmlElement());
+	string  str = xml2string(doc);
+
+	cout<<str<<endl;
+
+}
+void Node::SetAllValue(int type ,int position,string value)
+{
+	this->type = type;
+	this->position = position;
+	this->value	= value;
+}
+
+void Node::GetAllValue(int &type,int &position,string &value)
+{
+	type = this->type;
+	position = this->position;
+	value = this->value;
+}
+		
+TiXmlElement * Node::ToTiXmlElement()
+{
+    string name = type ? "node":"leaf";
+    string valueType  = type ? "threshold":"value";
+ 
+    string posAtrValue = int2str(position);
+    TiXmlElement *element = new TiXmlElement("");
+    element->SetValue(name.c_str());
+    element->SetAttribute("pos",posAtrValue.c_str());
+    element->SetAttribute(valueType.c_str(),value.c_str());
+    return element;
+}
+
+bool Node::IsLeaf()
+{
+    return type ? false:true; 	
+}
+int Node::GetPosition()
+{
+	return position;
+}
+string Node::GetValue()
+{
+	return value;
+
+}

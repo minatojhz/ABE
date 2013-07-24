@@ -1,0 +1,201 @@
+#include <iostream> 
+#include <boost/regex.hpp> 
+#include <vector>
+#include <string>
+#include <stdlib.h>
+#include "tinystr.h"
+#include "tinyxml.h"
+using namespace std;
+string del_blank(string str);
+vector<string> handle(string express);
+vector<string> splite(string str,string sp);
+string int2str(int value);
+string undo(string express,vector<string> vec,int &count);
+void init_node(TiXmlElement *element,int type,int pos,string value);
+void contruct_or(string express,TiXmlElement * parent,int index);
+void contruct_and(string express,TiXmlElement *parent,int index);
+string xml_2string(TiXmlDocument * doc);
+TiXmlDocument * string_2xml(string str);
+
+int main() 
+{ 
+   TiXmlDocument *doc = new TiXmlDocument();
+   TiXmlElement *root = new TiXmlElement("");
+   string express = "((test=123||ok=345) && (age = 18 || bug = OK && next=90 )||why = okwhy) && ui=789";
+   express = del_blank(express);
+   cout<<express<<endl;
+   contruct_or(express,root,1);
+   doc->LinkEndChild(root);
+   doc->Print();
+   
+   
+   
+    
+} 
+
+string xml_2string(TiXmlDocument * doc)
+{
+  TiXmlPrinter printer;
+  doc->Accept(&printer);
+  return printer.CStr();
+}
+
+TiXmlDocument * string_2xml(string str)
+{
+  TiXmlDocument *doc = new TiXmlDocument();
+  doc->Parse(str.data());
+  return doc;
+}
+string del_blank(string str)
+{
+         boost::regex blank("\\s");
+         return boost::regex_replace(str,blank,"");
+
+}
+vector<string> handle(string express)
+{
+         string regstr = "\\((?:(?>[^()]+)|(?0))*\\)"; 
+
+         boost::smatch what; 
+         boost::regex  re(regstr); 
+
+         string::const_iterator start = express.begin(); 
+         string::const_iterator end = express.end(); 
+	     vector<string> vec = vector<string>();
+
+	     vec.push_back(boost::regex_replace(express,re,"@"));
+
+	
+         
+         while (boost::regex_search(start,end,what,re)) 
+         { 
+             std::string msg(what[0].first+1, what[0].second-1); 
+	         vec.push_back(msg);  
+		     start = what[0].second;
+         }
+
+	return vec;
+} 
+
+vector<string> splite(string str,string sp)
+{
+
+
+    boost::regex reg(sp);
+    boost::sregex_token_iterator it(str.begin(),str.end(),reg,-1);
+    boost::sregex_token_iterator end;
+
+    vector<string> spv= vector<string>();
+    while(it != end)
+    {
+        spv.push_back(*it++);
+    }
+
+    return spv;
+}
+string int2str(int value)
+{
+    char str[20];
+    sprintf(str,"%d",value);
+    return str;
+}
+void init_node(TiXmlElement *element,
+               int type,
+               int pos,
+               string value)
+{
+    string name = type ? "node":"leaf";
+    string valtype  = type ? "thrhold":"value"; 
+    string posstr = int2str(pos);
+    element->SetValue(name.c_str());
+
+    element->SetAttribute("pos",posstr.c_str());
+    element->SetAttribute(valtype.c_str(),value.c_str());
+}
+void contruct_or(string express,TiXmlElement * parent,int index)
+{
+    vector<string> hv = handle(express);
+
+    vector<string> orv= splite(hv[0],"\\|\\|");
+
+    int count = 1;
+
+    if(orv.size() > 1)
+    {
+        init_node(parent,1,index,"1");
+
+        for(int i=0;i<orv.size();i++)
+        {
+            TiXmlElement *child = new TiXmlElement("");
+            parent->LinkEndChild(child);
+
+            if(orv[i] == "@")
+            {
+                contruct_or(hv[count++],child,i+1);
+            }
+            else if(orv[i].find("@") != orv[i].npos)
+            {
+                string undo_express = undo(orv[i],hv,count);
+                contruct_and(undo_express,child,i+1);
+            }
+            else
+            {
+                contruct_and(orv[i],child,i+1);
+            }
+        }
+    }
+    else
+    {
+        string undo_express = undo(orv[0],hv,count);
+        contruct_and(undo_express,parent,index);
+    
+    }
+}
+string undo(string express,vector<string> vec,int &count)
+{
+    string::size_type pos = 0;
+
+    while((pos=express.find_first_of("@",pos))
+                    != string::npos)
+    {
+        express = express.replace(pos,1,"("+vec[count++]+")");
+    }
+    return express;
+
+
+}
+void contruct_and(string express,TiXmlElement *parent,int index)
+{
+    cout<<"express::"<<express<<endl<<endl;
+    vector<string> hv = handle(express);
+    vector<string> andv = splite(hv[0],"&&");
+
+    int count =1;
+    if(andv.size() > 1)
+    {
+        init_node(parent,1,index,int2str(andv.size()));
+
+        for(int i=0;i<andv.size();i++)
+        {
+            TiXmlElement * child = new TiXmlElement("");
+            parent->LinkEndChild(child);
+            cout<<":::"<<andv[i]<<endl;        
+            if(andv[i] == "@")
+            {
+                string exp = hv[count++];
+                contruct_or(exp,child,i+1);
+            }   
+            else
+            {
+                vector<string> value = splite(andv[i],"=");
+                init_node(child,0,i+1,value[1]);
+            }
+        }
+    }
+    else
+    {   
+        vector<string> value = splite(andv[0],"=");
+        init_node(parent,0,index,value[1]); 
+    }
+
+}

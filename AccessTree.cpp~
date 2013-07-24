@@ -1,0 +1,140 @@
+#include "AccessTree.h"
+
+vector<AtrPathLCM>* AccessTree::GetAtrPathLCM(char **ua,BIGNUM *p)
+{
+    deque<Node> *pNodeQue = new deque<Node>();
+    
+    vector<AtrPathLCM> *atrVector = new vector<AtrPathLCM>();
+
+    if(!IsSatisfied(ua,pNodeQue))
+    {
+	    return atrVector;
+    }
+
+    int track,i;
+    stack<Node> *ps = new stack<Node>();
+    vector<int>* partyIndex = new vector<int>();
+    
+  
+    while(pNodeQue->size() != 0)
+    {
+       Node node = pNodeQue->front();
+       if(!node.IsLeaf())
+       {
+          partyIndex->clear();
+
+	      int threshold =  atoi(node.GetValue().c_str());
+          track = ps->size() - threshold + 1;
+	      GetPartyIndexs(ps,partyIndex,threshold);
+          UpdateAtrPathLCM(partyIndex,track,atrVector,ps,threshold,p);
+       }
+       ps->push(node);
+       pNodeQue->pop_back();
+   }
+	
+   return atrVector;
+
+}
+void AccessTree::UpdateAtrPathLCM(vector<int> *partyIndex,int track,vector<AtrPathLCM> *pv,stack<Node> * ps,int threshold,BIGNUM *p)
+{
+ 
+    for(int i = 0;i<threshold;i++)
+    {
+        Node childNode = ps->top();
+	Polynomial polynomial = Polynomial();
+	polynomial.SetP(p);
+	BIGNUM *lagCoe = polynomial.GetLagIntCoe(partyIndex,childNode.GetPosition());
+        if(childNode.IsLeaf())
+        {
+	        AtrPathLCM atrPathLCM = AtrPathLCM(childNode.GetValue());
+	        atrPathLCM.MultiLagCoe(lagCoe);
+	        atrPathLCM.SetTrack(track);
+            	pv->push_back(atrPathLCM);
+        }
+        else
+        {
+            for(int j=0;j<pv->size();j++)
+            {
+                if((*pv)[j].GetTrack() == ps->size())
+                {
+                      (*pv)[j].MultiLagCoe(lagCoe);
+		      (*pv)[j].SetTrack(track);      
+                }
+            }
+        }
+        ps->pop();
+    }
+       
+}
+
+void AccessTree::GetPartyIndexs(stack<Node> *ps,vector<int> * pv,int threshold)
+{
+    for(int i=0;i<threshold;i++)
+    {
+        int position =(&ps->top()-i)->GetPosition();
+        pv->push_back(position); 
+    }
+}
+
+AccessTree::AccessTree(string accessTreeStr)
+{
+   this->accessTreeStr = accessTreeStr;
+}
+
+bool AccessTree::IsSatisfied(char **userAtrSet,deque<Node> *pNodeQue)
+{
+   TiXmlElement * root = string2xml(accessTreeStr)->RootElement();
+   Node node = Node(root);
+   
+   bool isSatisfied = SatisfyAceessTree(userAtrSet,root,pNodeQue);
+   cout<<"test"<<endl;
+   if(isSatisfied)
+   {
+	pNodeQue->push_back(node);
+   }
+
+   return isSatisfied;
+   
+}
+
+bool AccessTree::SatisfyAceessTree(char **userAtrSet,TiXmlElement *element,deque<Node> *pNodeQue)
+{
+ 
+   Node parentNode = Node(element);
+
+   string value = parentNode.GetValue();
+ 
+   cout<<value<<endl;
+   if(parentNode.IsLeaf())
+   {
+     return  contain_string( userAtrSet,value.c_str())? true:false;
+   }
+
+   int count = 0;
+
+   TiXmlElement * child = element->FirstChildElement();
+   
+   while(child && count < atoi(value.c_str()))
+   {
+      
+      int orginalSize = pNodeQue->size();
+      cout<<count<<endl
+      if(SatisfyAceessTree(userAtrSet,child,pNodeQue))
+      {
+         Node childNode = Node(child);
+         pNodeQue->push_back(childNode);
+	 count++;
+      }
+      else
+      {
+         while(pNodeQue->size() != orginalSize)
+         {
+            pNodeQue->pop_back();
+         }
+      }
+    
+      child = child->NextSiblingElement();
+   }
+
+   return count >= atoi(value.c_str()) ? true : false ;
+}

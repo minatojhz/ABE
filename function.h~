@@ -1,0 +1,44 @@
+#ifndef HEAD_FUNCTION
+#define HEAD_FUNCTION
+#include <iostream> 
+#include <boost/regex.hpp> 
+#include <vector>
+#include <string>
+#include <stdlib.h>
+#include "tinystr.h"
+#include "tinyxml.h"
+using namespace std;
+/**
+ * @description_ 初始化节点
+ * @param_ [elment,type,pos,value] ,[type=1 elment 是节点 type=0 elment 是叶子
+ 				     pos 是elment的父亲的第几个孩子
+ 				     type = 1 value是门限值 type=0 value是属性值
+				    ]
+ * @return_ void
+ *
+ */
+void init_node(TiXmlElement *element,
+		int type,
+		int pos,
+		string value);
+
+void get_node_value(TiXmlElement *element,
+                    int &type,
+                    int &pos,
+                    string &value);
+
+vector<string> splite(string str,string sp);
+
+string int2str(int value);
+
+string del_blank(string str);
+
+string replace(string str,string sub,string rep);
+
+string xml2string(TiXmlDocument * doc);
+
+TiXmlDocument * string2xml(string str);
+
+int contain_string(char **ua,const char *e);
+
+#endif

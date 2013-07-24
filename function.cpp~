@@ -1,0 +1,59 @@
+#include"function.h"
+
+vector<string> splite(string str,string sp)
+{
+    boost::regex reg(sp);
+    boost::sregex_token_iterator it(str.begin(),str.end(),reg,-1);
+    boost::sregex_token_iterator end;
+
+    vector<string> spv= vector<string>();
+    while(it != end)
+    {
+        spv.push_back(*it++);
+    }
+
+    return spv;
+}
+string int2str(int value)
+{
+    char str[20];
+    sprintf(str,"%d",value);
+    return str;
+}
+void init_node(TiXmlElement *element,
+               int type,
+               int pos,
+               string value)
+{
+    string name = type ? "node":"leaf";
+    string valtype  = type ? "threhold":"value"; 
+    string posstr = int2str(pos);
+
+    element->SetValue(name.c_str());
+    element->SetAttribute("pos",posstr.c_str());
+    element->SetAttribute(valtype.c_str(),value.c_str());
+}
+
+string del_blank(string str)
+{
+    return replace(str,"\\s","");
+}
+string replace(string str,string sub,string rep)
+{
+    boost::regex reg(sub);
+    return boost::regex_replace(str,reg,sub);
+}
+string xml2string(TiXmlDocument * doc)
+{
+  TiXmlPrinter printer;
+  doc->Accept(&printer);
+  return printer.CStr();
+}
+
+TiXmlDocument * string2xml(string str)
+{
+  TiXmlDocument *doc = new TiXmlDocument();
+  doc->Parse(str.data());
+  return doc;
+}
+
